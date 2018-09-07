@@ -54,21 +54,18 @@ public class ServerNit extends Thread {
 			BufferedReader ulaz = new BufferedReader(new InputStreamReader(soket.getInputStream()));
 			username = ulaz.readLine();
 			Server.textArea.append("Novi klijent: " + username + "\n");
-			System.out.println(brIgraca +"");
-			if(brIgraca == 1) {
-				System.out.println("Saljem novog clana");
+			System.out.println(brIgraca + "");
+			if (brIgraca == 1) {
 				Server.posaljiPoruku("[NOVI IGRAC] : Username = " + username, this);
-				System.out.println("Novi igrac poslat");
 			}
 			while (true) {
 				String prijem = ulaz.readLine();
-				
+
 				Server.posaljiPoruku(prijem, this);
 
 			}
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 

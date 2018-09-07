@@ -28,6 +28,9 @@ import client.nit.ClientNit;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 
 public class MainClient {
 
@@ -40,7 +43,7 @@ public class MainClient {
 	public ClientIgra ci;
 	private ClientNit cn;
 	public static String drugiKlijent;
-	
+
 	public JTextArea getTextArea() {
 		return textArea;
 	}
@@ -79,8 +82,8 @@ public class MainClient {
 	 * Initialize the contents of the frame.
 	 */
 	private void initialize() {
-		
-		frame = new JFrame();
+
+		frame = new JFrame("Bomberman client");
 		frame.setBounds(100, 100, 886, 800);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setResizable(false);
@@ -115,7 +118,7 @@ public class MainClient {
 		JTextField textField_1 = new JTextField();
 		textField_1.addKeyListener(new KeyAdapter() {
 			@Override
-			public void keyPressed(KeyEvent arg0) { 
+			public void keyPressed(KeyEvent arg0) {
 				// Chat
 				if (arg0.getKeyCode() == KeyEvent.VK_ENTER && soket != null) {
 					textArea.append("[" + user + "] : " + textField_1.getText() + "\n");
@@ -133,34 +136,34 @@ public class MainClient {
 		btnPoveziSe.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String adresa = textField.getText();
-				if(soket == null)
-				try {
-					soket = new Socket(adresa, 2401);
+				if (soket == null)
+					try {
+						soket = new Socket(adresa, 2401);
 
-					BufferedReader ulaz = new BufferedReader(new InputStreamReader(soket.getInputStream()));
-					PrintWriter izlaz = new PrintWriter(soket.getOutputStream(), true);
-					System.out.println("Zapocinjem prijem poruke...");
-					String prijem = ulaz.readLine();
+						BufferedReader ulaz = new BufferedReader(new InputStreamReader(soket.getInputStream()));
+						PrintWriter izlaz = new PrintWriter(soket.getOutputStream(), true);
+						System.out.println("Zapocinjem prijem poruke...");
+						String prijem = ulaz.readLine();
 
-					System.out.println(prijem);
-					if (prijem.contains("Prebukirano")) {
-						JOptionPane.showMessageDialog(frame, "Server je prebukiran", "Greska",
-								JOptionPane.ERROR_MESSAGE);
-					} else if (prijem.contains("Dobrodosli")) {
-						b = Integer.parseInt(prijem.split(",")[1]);
-						textArea.append("Br igraca je : " + b + "\n");
-						user = JOptionPane.showInputDialog(frame, "Unesite korisnicko ime");
-						if (!user.isEmpty()) {
-							izlaz.println(user);
-							System.out.println("Korisnicko ime poslato!");
-							napraviNit(b);
+						System.out.println(prijem);
+						if (prijem.contains("Prebukirano")) {
+							JOptionPane.showMessageDialog(frame, "Server je prebukiran", "Greska",
+									JOptionPane.ERROR_MESSAGE);
+						} else if (prijem.contains("Dobrodosli")) {
+							b = Integer.parseInt(prijem.split(",")[1]);
+							textArea.append("Br igraca je : " + b + "\n");
+							user = JOptionPane.showInputDialog(frame, "Unesite korisnicko ime");
+							if (!user.isEmpty()) {
+								izlaz.println(user);
+								System.out.println("Korisnicko ime poslato!");
+								napraviNit(b);
+							}
 						}
+						textArea.append("Dobrodosli " + user + "\n");
+					} catch (IOException ex) {
+						System.out.println("Kontrolisana greska!");
+						System.out.println("Nije moguce povezati se na server. Proverite da li je server pokrenut!");
 					}
-					textArea.append("Dobrodosli " + user + "\n");
-				} catch (IOException ex) {
-					System.out.println("Kontrolisana greska!");
-					System.out.println("Nije moguce povezati se na server. Proverite da li je server pokrenut!");
-				}
 				else
 					textArea.append("Vec ste povezani sa serverom!\n");
 			}
@@ -170,8 +173,19 @@ public class MainClient {
 
 		JButton btnNewButton = new JButton("Prekini\t");
 		btnNewButton.addActionListener(new ActionListener() {
+			@SuppressWarnings("deprecation")
 			public void actionPerformed(ActionEvent arg0) {
-				// kraj
+				try {
+					if (soket != null) {
+						
+						cn.getSoket().close();
+						cn.getUlaz().close();
+						soket.close();
+				}
+				} catch (IOException e) {
+					textArea.append("Greska pri obustavljanju konekcije!\n");
+				}
+				frame.dispose();
 			}
 		});
 		btnNewButton.setBounds(12, 371, 176, 46);
@@ -193,8 +207,7 @@ public class MainClient {
 		});
 		btnNewButton_1.setBounds(12, 247, 176, 46);
 		panel.add(btnNewButton_1);
-		
-		
+
 	}
 
 	private void posaljiPoruku(String text) {
@@ -238,11 +251,17 @@ public class MainClient {
 		frame2.setLocationRelativeTo(frame);
 		frame2.setVisible(true);
 		frame2.setResizable(false);
+		frame2.setBounds(100, 100, 825, 900);
 
 		frame2.add(ci);
 		frame2.pack();
 		frame2.setSize(725, 800);
-
+		frame.setVisible(false);
+		frame2.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				frame.setVisible(true);
+			}
+		});
 	}
 
 	public void dopisiNovogIgraca(String prijem) {
@@ -254,52 +273,58 @@ public class MainClient {
 			System.out.println("Nije moguce uspostaviti konekciju sa serverom!");
 		}
 	}
-	
+
 	public void posaljiPomeraj(int b) {
 		PrintWriter izlaz;
 		try {
-			 izlaz = new PrintWriter(soket.getOutputStream(), true);
-			 switch(b) {
-				case 8: izlaz.println("[POMERANJE]: Gore");
+			izlaz = new PrintWriter(soket.getOutputStream(), true);
+			switch (b) {
+			case 8:
+				izlaz.println("[POMERANJE]: Gore");
 				break;
-				case 2: izlaz.println("[POMERANJE]: Dole");
+			case 2:
+				izlaz.println("[POMERANJE]: Dole");
 				break;
-				case 4: izlaz.println("[POMERANJE]: Levo");
+			case 4:
+				izlaz.println("[POMERANJE]: Levo");
 				break;
-				case 6: izlaz.println("[POMERANJE]: Desno");
+			case 6:
+				izlaz.println("[POMERANJE]: Desno");
 				break;
-				default: break;
-			 }
-			
-		}catch(IOException ex) {
+			default:
+				break;
+			}
+
+		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
-		
+
 	}
+
 	public void pomeranjeIgraca(String poruka) {
 		textArea.append("Pomeranje!\n");
-		if(poruka.contains("Gore"))
+		if (poruka.contains("Gore"))
 			ci.pomeranje(8);
-		else if(poruka.contains("Dole"))
+		else if (poruka.contains("Dole"))
 			ci.pomeranje(2);
-		else if(poruka.contains("Levo"))
+		else if (poruka.contains("Levo"))
 			ci.pomeranje(4);
-		else if(poruka.contains("Desno"))
+		else if (poruka.contains("Desno"))
 			ci.pomeranje(6);
-		
+
 	}
-	
+
 	public void posaljiBombu(int pozX, int pozY, String prefiks) {
 		try {
 			PrintWriter izlaz = new PrintWriter(soket.getOutputStream(), true);
-			izlaz.println(prefiks+": "+pozX+": "+pozY);
-		}catch(IOException ex) {
+			izlaz.println(prefiks + ": " + pozX + ": " + pozY);
+		} catch (IOException ex) {
 			System.out.println("Greska pri povezivanju PrintWritera!");
 		}
 	}
 
 	public void postaviBombu(int b2, int c) {
 		ci.postaviBombu(b2, c);
-		
+
 	}
 }

@@ -21,8 +21,9 @@ import server.nit.ServerNit;
 public class Server {
 	public static ArrayList<ServerNit> klijenti = new ArrayList<>();
 	public static JTextArea textArea;
+	public static int brIgraca = 0;
 	public static void main(String[] args) {
-		int brIgraca = 0;
+		
 		
 		try {
 			
@@ -86,6 +87,7 @@ public class Server {
 				PrintWriter pw = new PrintWriter(sn.getSoket().getOutputStream(), true);
 				pw.println(string);
 				textArea.append("Poruka poslata" + "\n");
+				
 			}
 		}
 	}

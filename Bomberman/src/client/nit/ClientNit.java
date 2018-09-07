@@ -15,6 +15,22 @@ public class ClientNit extends Thread {
 	private int pozX, pozY;
 	private int pixX, pixY;
 	private MainClient mc;
+	
+	public Socket getSoket() {
+		return soket;
+	}
+
+	public void setSoket(Socket soket) {
+		this.soket = soket;
+	}
+
+	public BufferedReader getUlaz() {
+		return ulaz;
+	}
+
+	public void setUlaz(BufferedReader ulaz) {
+		this.ulaz = ulaz;
+	}
 
 	public ClientNit(Socket soket, MainClient mc, int brIgraca) {
 		this.soket = soket;
@@ -60,7 +76,7 @@ public class ClientNit extends Thread {
 			}
 
 		} catch (IOException ex) {
-			ex.printStackTrace();
+			mc.getTextArea().append("Prekinuta konekcija\n");
 		}
 
 	}
