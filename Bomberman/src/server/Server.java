@@ -22,17 +22,17 @@ public class Server {
 	public static ArrayList<ServerNit> klijenti = new ArrayList<>();
 	public static JTextArea textArea;
 	public static int brIgraca = 0;
+
 	public static void main(String[] args) {
-		
-		
+
 		try {
-			
+
 			JFrame frame = new JFrame("Bomberman - server");
 			frame.setSize(400, 400);
 			frame.setResizable(false);
 			frame.setFocusable(false);
 			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			
+
 			JScrollPane scrollPane = new JScrollPane();
 			frame.getContentPane().add(scrollPane, BorderLayout.CENTER);
 			textArea = new JTextArea();
@@ -41,24 +41,22 @@ public class Server {
 			frame.setVisible(true);
 			ServerSocket server = new ServerSocket(2401);
 			textArea.append("Server startovan\n" + InetAddress.getLocalHost().getHostAddress() + "\n");
-			
-			while(true) {
+
+			while (true) {
 				Socket soket = server.accept();
-				if(brIgraca < 2) {
+				if (brIgraca < 2) {
 					prihvati(soket);
 					brIgraca++;
-				}else {
+				} else {
 					odbi(soket);
 					textArea.append("Klijent odbijen!\n");
 				}
 			}
-			
-			
-		}catch (IOException e) {
+
+		} catch (IOException e) {
 			textArea.append("Nije moguce startovati server!\n");
 		}
-		
-		
+
 	}
 
 	private static void odbi(Socket soket) {
@@ -74,7 +72,12 @@ public class Server {
 	}
 
 	private static void prihvati(Socket soket) {
-		ServerNit serverNit = new ServerNit(soket, klijenti.size());
+		ServerNit serverNit;
+		if (brIgraca == 1 && klijenti.get(0) == null) { // U slucaju da je igru napustio prvi igrac, a da se nakon toga
+														// na server poveze novi igrac...
+			serverNit = new ServerNit(soket, 0);
+		} else
+			serverNit = new ServerNit(soket, klijenti.size());
 		klijenti.add(serverNit);
 		Thread sn = new Thread(serverNit);
 		sn.start();
@@ -82,15 +85,21 @@ public class Server {
 
 	public static void posaljiPoruku(String string, ServerNit serverNit) throws IOException {
 		for (ServerNit sn : klijenti) {
-			if(sn.getUsername() != serverNit.getUsername()) {
-				textArea.append("Pocinjem slanje poruke ka "+sn.getUsername() + "\n");
+			if (sn.getUsername() != serverNit.getUsername()) {
+				textArea.append("Pocinjem slanje poruke ka " + sn.getUsername() + "\n");
 				PrintWriter pw = new PrintWriter(sn.getSoket().getOutputStream(), true);
 				pw.println(string);
 				textArea.append("Poruka poslata" + "\n");
-				
+
 			}
 		}
 	}
-	
-	
+
+	public static void izbaciKlijenta(ServerNit sN) throws IOException, InterruptedException {
+		klijenti.remove(sN);
+		sN.getSoket().close();
+		sN.join();
+		brIgraca--;
+	}
+
 }

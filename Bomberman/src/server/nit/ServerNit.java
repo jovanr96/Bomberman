@@ -36,7 +36,7 @@ public class ServerNit extends Thread {
 		this.brIgraca = brIgraca;
 	}
 
-	private String username;
+	private String username = "";
 	private int brIgraca;
 
 	public ServerNit(Socket soket, int brIgraca) {
@@ -52,7 +52,32 @@ public class ServerNit extends Thread {
 			PrintWriter izlaz = new PrintWriter(soket.getOutputStream(), true);
 			izlaz.println("Dobrodosli!," + brIgraca);
 			BufferedReader ulaz = new BufferedReader(new InputStreamReader(soket.getInputStream()));
-			username = ulaz.readLine();
+			boolean p = true;
+			// Provera da li je username zauzet!
+			while (p) {
+				username = ulaz.readLine().trim();
+				if(username==null)
+					p = false;
+				else if(username.startsWith(""))
+					p = false;
+				if (!Server.klijenti.isEmpty())
+					for (ServerNit k : Server.klijenti) {
+						if (k.username.equals(username) && k != this) {
+							p = false;
+						}
+					}
+				if (!p) {
+					p = true;
+					System.out.println("Saljem ponovo");
+					izlaz.println("Ponovo");
+					System.out.println("Poslato ponovo");
+				} else {
+					System.out.println("Saljem moze!");
+					izlaz.println("Moze");
+					System.out.println("Poslato moze!");
+					break;
+				}
+			}
 			Server.textArea.append("Novi klijent: " + username + "\n");
 			System.out.println(brIgraca + "");
 			if (brIgraca == 1) {
@@ -60,12 +85,18 @@ public class ServerNit extends Thread {
 			}
 			while (true) {
 				String prijem = ulaz.readLine();
-
+				if (prijem.startsWith("[PREKID]")) {
+					Server.textArea.append("Igrac " + username + " je napustio igru...\n");
+					Server.posaljiPoruku(prijem, this);
+					ulaz.close();
+					izlaz.close();
+					Server.izbaciKlijenta(this);
+					break;
+				}
 				Server.posaljiPoruku(prijem, this);
-
 			}
 
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 

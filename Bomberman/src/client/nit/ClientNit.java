@@ -50,9 +50,9 @@ public class ClientNit extends Thread {
 				if (prijem.startsWith("CHAT"))
 					mc.getTextArea().append(prijem.split(";")[1] + "\n");
 				else if(prijem.startsWith("[START]")) {
-					mc.posaljiPorukuZaStart();
+					mc.posaljiPorukuZaStart(Integer.parseInt(prijem.split(":")[1].trim()));
 				}else if(prijem.startsWith("START")) {
-					mc.pokreniIgru();
+					mc.pokreniIgru(Integer.parseInt(prijem.split(":")[1].trim()));
 				}
 				else if(prijem.startsWith("[NOVI IGRAC]")) {
 					System.out.println("Primljen novi igrac!");
@@ -71,6 +71,14 @@ public class ClientNit extends Thread {
 					int b = Integer.parseInt(prijem.split(":")[1].trim());
 					int c = Integer.parseInt(prijem.split(":")[2].trim());
 					mc.ci.pucanje(b, c);
+				}
+				else if(prijem.startsWith("[PREKID]")) {
+					System.out.println("Primljena poruka za prekid!");
+					mc.izbaciIgraca();
+				}
+				else if(prijem.startsWith("[PREKID IGRE]")) {
+					mc.ugasiIgruIPrikaziRezultat(1);
+					
 				}
 					
 			}

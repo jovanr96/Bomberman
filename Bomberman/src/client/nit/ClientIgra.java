@@ -26,6 +26,7 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 
 	private static final long serialVersionUID = 1L;
 	public int brIgraca;
+	public int brPartija;
 	private int[][] tabla = new int[14][18];
 	private ImageIcon prvaSlika = new ImageIcon("resursi/prvaSlika.png");
 	private ImageIcon zid9 = new ImageIcon("resursi/zid9.png");
@@ -47,7 +48,7 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 	public short mrtav;
 	public boolean proveraZaEksploziju = true;
 
-	public ClientIgra(int brIgraca, MainClient mc) {
+	public ClientIgra(int brIgraca, MainClient mc, int i) {
 		this.brIgraca = brIgraca;
 		if (brIgraca == 0) {
 			igraci.add(new Igrac(mc.user, 2, 2, 2 * 40 + 50, 2 * 40 + 10, true, true, false));
@@ -61,6 +62,7 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 		setFocusable(true);
 		setFocusTraversalKeysEnabled(false);
 		this.mc = mc;
+		brPartija = i;
 	}
 
 	private void ucitajTabelu() {
@@ -437,6 +439,13 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 	}
 
 	public void ponovo() {
+		if (igraci.get(0).getBrPobeda() == brPartija) {
+			mc.ugasiIgruIPrikaziRezultat(2);
+			return;
+		} else if (igraci.get(1).getBrPobeda() == brPartija) {
+			mc.ugasiIgruIPrikaziRezultat(3);
+			return;
+		}
 		igraci.get(0).setPozX(2);
 		igraci.get(0).setPozY(2);
 		igraci.get(0).setPixX(2 * 40 + 50);
@@ -460,4 +469,8 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 		repaint();
 	}
 
+	public String vratiPobede() {
+		return "Pobede igraca " + igraci.get(0).getUsername() + ": " + igraci.get(0).getBrPobeda() + "\n Pobede igraca "
+				+ igraci.get(1).getUsername() + ": " + igraci.get(1).getBrPobeda() + "\n";
+	}
 }
