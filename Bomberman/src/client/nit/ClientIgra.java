@@ -27,12 +27,15 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 	private static final long serialVersionUID = 1L;
 	public int brIgraca;
 	public int brPartija;
-	private int[][] tabla = new int[14][18];
+	public int duzina = 18;
+	public int sirina = 14;
+	public static int[][] tabla = new int[14][18];
 	private ImageIcon prvaSlika = new ImageIcon("resursi/prvaSlika.png");
 	private ImageIcon zid9 = new ImageIcon("resursi/zid9.png");
 	private ImageIcon zid1 = new ImageIcon("resursi/zid1.png");
 	private ImageIcon slikaIgraca1 = new ImageIcon("resursi/player1/6.png");
 	private ImageIcon slikaIgraca2 = new ImageIcon("resursi/player2/6.png");
+	private ImageIcon ubijajuciZid = new ImageIcon("resursi/zidUbijajuci.png");
 	private ImageIcon bomba = new ImageIcon("resursi/bomba/bomb4.png");
 	private ImageIcon tataSpalioDjenku = new ImageIcon("resursi/player1/Eksplozija1.png");
 	private ImageIcon plamenPoPoljima = new ImageIcon("resursi/eksplozija/expl1.png");
@@ -47,15 +50,19 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 	public short boomPoPoljima = 1;
 	public short mrtav;
 	public boolean proveraZaEksploziju = true;
+	public int brSekundi = 120;
+	public int promenljivaUbijajuca = 1;
+	public int promenljivaUbijajucaX = 1;
+	public int promenljivaUbijajucaY = 1;
 
 	public ClientIgra(int brIgraca, MainClient mc, int i) {
 		this.brIgraca = brIgraca;
 		if (brIgraca == 0) {
-			igraci.add(new Igrac(mc.user, 2, 2, 2 * 40 + 50, 2 * 40 + 10, true, true, false));
-			igraci.add(new Igrac(MainClient.drugiKlijent, 11, 15, 11 * 40 + 50, 15 * 40 + 10, true, true, false));
+			igraci.add(new Igrac(mc.user, 2, 2, 2 * 40 + 70, 2 * 40 + 10, true, true, false));
+			igraci.add(new Igrac(MainClient.drugiKlijent, 11, 15, 11 * 40 + 70, 15 * 40 + 10, true, true, false));
 		} else if (brIgraca == 1) {
-			igraci.add(new Igrac(MainClient.drugiKlijent, 2, 2, 2 * 40 + 50, 2 * 40 + 10, true, true, false));
-			igraci.add(new Igrac(mc.user, 11, 15, 11 * 40 + 50, 15 * 40 + 10, true, true, false));
+			igraci.add(new Igrac(MainClient.drugiKlijent, 2, 2, 2 * 40 + 70, 2 * 40 + 10, true, true, false));
+			igraci.add(new Igrac(mc.user, 11, 15, 11 * 40 + 70, 15 * 40 + 10, true, true, false));
 		}
 		ucitajTabelu();
 		addKeyListener(this);
@@ -107,7 +114,7 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 		} else if (arg0.getKeyCode() == KeyEvent.VK_D && proveraPomeranja(6)) {
 			igraci.get(brIgraca).setPixY(igraci.get(brIgraca).getPixY() + 10);
 			mc.posaljiPomeraj(6);
-		} else if (arg0.getKeyCode() == KeyEvent.VK_M) {
+		} else if (arg0.getKeyCode() == KeyEvent.VK_M && igraci.get(brIgraca).isMozeBomba()) {
 			igraci.get(brIgraca).setMozeBomba(false);
 			postaviBombu(igraci.get(brIgraca).getPozX(), igraci.get(brIgraca).getPozY());
 			Bomba b = new Bomba(igraci.get(brIgraca).getPozX(), igraci.get(brIgraca).getPozY(), mc);
@@ -120,14 +127,10 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 
 	@Override
 	public void keyReleased(KeyEvent arg0) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void keyTyped(KeyEvent arg0) {
-		// TODO Auto-generated method stub
-
 	}
 
 	Timer t = new Timer(1000, new ActionListener() { // Timer za ispis odbrojavanja
@@ -196,6 +199,61 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 		}
 	});
 
+	Timer odbrojavanje = new Timer(1000, new ActionListener() {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			brSekundi--;
+			repaint();
+		}
+	});
+
+	Timer ubijajuceBombe = new Timer(700, new ActionListener() {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			if (promenljivaUbijajucaX < sirina - promenljivaUbijajuca) {
+				tabla[promenljivaUbijajucaX][duzina - promenljivaUbijajuca - 1] = 8;
+				tabla[promenljivaUbijajucaX][promenljivaUbijajuca] = 8;
+				if (igraci.get(0).getPozX() == promenljivaUbijajucaX
+						&& igraci.get(0).getPozY() == duzina - promenljivaUbijajuca - 1)
+					igraci.get(0).setZiv(false);
+				if (igraci.get(0).getPozX() == promenljivaUbijajucaX && igraci.get(0).getPozY() == promenljivaUbijajuca)
+					igraci.get(0).setZiv(false);
+				if (igraci.get(1).getPozX() == promenljivaUbijajucaX
+						&& igraci.get(1).getPozY() == duzina - promenljivaUbijajuca - 1)
+					igraci.get(1).setZiv(false);
+				if (igraci.get(1).getPozX() == promenljivaUbijajucaX && igraci.get(1).getPozY() == promenljivaUbijajuca)
+					igraci.get(1).setZiv(false);
+				promenljivaUbijajucaX++;
+			}
+
+			if (promenljivaUbijajucaY < duzina - promenljivaUbijajuca) {
+				tabla[promenljivaUbijajuca][promenljivaUbijajucaY] = 8;
+				tabla[sirina - promenljivaUbijajuca - 1][promenljivaUbijajucaY] = 8;
+				if (igraci.get(0).getPozX() == promenljivaUbijajuca && igraci.get(0).getPozY() == promenljivaUbijajucaY)
+					igraci.get(0).setZiv(false);
+				if (igraci.get(0).getPozX() == sirina - promenljivaUbijajuca - 1
+						&& igraci.get(0).getPozY() == promenljivaUbijajucaY)
+					igraci.get(0).setZiv(false);
+				if (igraci.get(1).getPozX() == promenljivaUbijajuca && igraci.get(1).getPozY() == promenljivaUbijajucaY)
+					igraci.get(1).setZiv(false);
+				if (igraci.get(1).getPozX() == sirina - promenljivaUbijajuca - 1
+						&& igraci.get(1).getPozY() == promenljivaUbijajucaY)
+					igraci.get(1).setZiv(false);
+
+				promenljivaUbijajucaY++;
+			}
+
+			if (promenljivaUbijajucaX > sirina - promenljivaUbijajuca - 1
+					&& promenljivaUbijajucaY > duzina - promenljivaUbijajuca - 1) {
+				promenljivaUbijajuca++;
+				promenljivaUbijajucaX = promenljivaUbijajuca;
+				promenljivaUbijajucaY = promenljivaUbijajuca;
+			}
+		}
+	});
+
 	@Override
 	public void paint(Graphics g) {
 
@@ -203,7 +261,7 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 			Font f = new Font("Arial", Font.BOLD, 20);
 			g.setFont(f);
 			g.setColor(Color.DARK_GRAY);
-			g.fillRect(1, 1, 724, 799);
+			g.fillRect(1, 1, 724, 699);
 			if (prvaSlikaProvera) {
 				prvaSlika.paintIcon(this, g, 1, 1);
 				prvaSlikaProvera = false;
@@ -217,32 +275,41 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 				g.drawString(is + "", 350, 400);
 			} else if (!novaPartija) {
 				t.stop();
+				if (!odbrojavanje.isRunning()) // Zapocinje merenje vremena
+					odbrojavanje.start();
 				g.setColor(Color.DARK_GRAY);
-				g.fillRect(1, 1, 724, 799);
+				g.fillRect(1, 1, 724, 699);
 				g.setFont(f);
 				g.setColor(Color.ORANGE);
 				g.drawString(igraci.get(0).getUsername() + ": " + igraci.get(0).getBrPobeda(), 20, 20);
 				g.setColor(Color.green);
 				g.drawString(igraci.get(1).getUsername() + ": " + igraci.get(1).getBrPobeda(), 600, 20);
+				g.setColor(Color.RED);
+				g.drawString(brSekundi / 60 + " : " + brSekundi % 60, 200, 20);
+				if (brSekundi == 64 && !ubijajuceBombe.isRunning())
+					ubijajuceBombe.start();
 
 				for (int i = 0; i < 14; i++) {
 					for (int j = 0; j < 18; j++) {
 						switch (tabla[i][j]) {
-						case 9: {
+						case 9: { // Obodni zid
 							zid9.paintIcon(this, g, j * 40, i * 40 + 50);
 							break;
 						}
-						case 1: {
+						case 1: { // Unutrasnji zid
 							zid1.paintIcon(this, g, j * 40, i * 40 + 50);
 							break;
 						}
-						case 4: {
+						case 4: { // Bomba
 							bomba.paintIcon(this, g, j * 40, i * 40 + 50);
 							break;
 						}
-						case 7: {
+						case 7: { // Plamen
 							plamenPoPoljima.paintIcon(this, g, j * 40, i * 40 + 50);
 							break;
+						}
+						case 8: {
+							ubijajuciZid.paintIcon(this, g, j * 40, i * 40 + 50);
 						}
 						}
 					}
@@ -256,22 +323,28 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 
 				if (!igraci.get(0).isZiv()) {
 					mrtav = 0;
+					odbrojavanje.stop();
+					ubijajuceBombe.stop();
 					if (proveraZaEksploziju) {
 						tataSpalioDjenku = new ImageIcon("resursi/player1/Eksplozija" + boom + ".png");
 						eksplozijaIgraca.start();
 						proveraZaEksploziju = false;
+
 					}
 
 					tataSpalioDjenku.paintIcon(this, g, igraci.get(0).getPixY(), igraci.get(0).getPixX());
 					if (!eksplozijaIgraca.isRunning()) {
+
 						g.setColor(Color.RED);
-						g.drawString("Pobednik  je " + igraci.get(1).getUsername(), 200, 20);
+						g.drawString("Pobednik  je " + igraci.get(1).getUsername(), 200, 40);
 						igraci.get(1).setBrPobeda(igraci.get(1).getBrPobeda() + 1);
 						cekajSek.start();
 						ponovo();
 					}
 				} else if (!igraci.get(1).isZiv()) {
 					mrtav = 1;
+					odbrojavanje.stop();
+					ubijajuceBombe.stop();
 					if (proveraZaEksploziju) {
 						tataSpalioDjenku = new ImageIcon("resursi/player2/Eksplozija" + boom + ".png");
 						eksplozijaIgraca.start();
@@ -281,7 +354,7 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 					tataSpalioDjenku.paintIcon(this, g, igraci.get(1).getPixY(), igraci.get(1).getPixX());
 					if (!eksplozijaIgraca.isRunning()) {
 						g.setColor(Color.RED);
-						g.drawString("Pobednik  je " + igraci.get(0).getUsername(), 200, 20);
+						g.drawString("Pobednik  je " + igraci.get(0).getUsername(), 200, 40);
 						igraci.get(0).setBrPobeda(igraci.get(0).getBrPobeda() + 1);
 						cekajSek.start();
 						ponovo();
@@ -299,16 +372,24 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 			System.out.println(igraci.get(brIgraca).getPixX() + ", " + igraci.get(brIgraca).getPixY());
 
 			return (tabla[(igraci.get(brIgraca).getPixX() - 50 - 10) / 40][igraci.get(brIgraca).getPozY()] != 1
-					&& tabla[(igraci.get(brIgraca).getPixX() - 50 - 10) / 40][igraci.get(brIgraca).getPozY()] != 9);
+					&& tabla[(igraci.get(brIgraca).getPixX() - 50 - 10) / 40][igraci.get(brIgraca).getPozY()] != 9
+					&& tabla[(igraci.get(brIgraca).getPixX() - 50 - 10) / 40][igraci.get(brIgraca).getPozY()] != 8
+					&& tabla[(igraci.get(brIgraca).getPixX() - 50 - 40) / 40][igraci.get(brIgraca).getPozY()] != 4);
 		case 2:
 			return (tabla[(igraci.get(brIgraca).getPixX() - 20 + 10) / 40][igraci.get(brIgraca).getPozY()] != 1
-					&& tabla[(igraci.get(brIgraca).getPixX() - 20 + 10) / 40][igraci.get(brIgraca).getPozY()] != 9);
+					&& tabla[(igraci.get(brIgraca).getPixX() - 20 + 10) / 40][igraci.get(brIgraca).getPozY()] != 9
+					&& tabla[(igraci.get(brIgraca).getPixX() - 20 + 10) / 40][igraci.get(brIgraca).getPozY()] != 8
+					&& tabla[(igraci.get(brIgraca).getPixX() - 20 + 40) / 40][igraci.get(brIgraca).getPozY()] != 4);
 		case 6:
 			return (tabla[igraci.get(brIgraca).getPozX()][(igraci.get(brIgraca).getPixY() + 20) / 40] != 1
-					&& tabla[igraci.get(brIgraca).getPozX()][(igraci.get(brIgraca).getPixY() + 20) / 40] != 9);
+					&& tabla[igraci.get(brIgraca).getPozX()][(igraci.get(brIgraca).getPixY() + 20) / 40] != 9
+					&& tabla[igraci.get(brIgraca).getPozX()][(igraci.get(brIgraca).getPixY() + 20) / 40] != 8
+					&& tabla[igraci.get(brIgraca).getPozX()][(igraci.get(brIgraca).getPixY() + 40) / 40] != 4);
 		case 4:
 			return (tabla[igraci.get(brIgraca).getPozX()][(igraci.get(brIgraca).getPixY() - 10) / 40] != 1
-					&& tabla[igraci.get(brIgraca).getPozX()][(igraci.get(brIgraca).getPixY() - 10) / 40] != 9);
+					&& tabla[igraci.get(brIgraca).getPozX()][(igraci.get(brIgraca).getPixY() - 10) / 40] != 9
+					&& tabla[igraci.get(brIgraca).getPozX()][(igraci.get(brIgraca).getPixY() - 10) / 40] != 8
+					&& tabla[igraci.get(brIgraca).getPozX()][(igraci.get(brIgraca).getPixY() - 40) / 40] != 4);
 		default:
 			return false;
 		}
@@ -381,14 +462,20 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 			if (x - i < 0)
 				break;
 			for (Igrac igrac : igraci) {
-				if (igrac.getPozX() == x - i && igrac.getPozY() == y) {
+				if (igrac.getPozX() == x - i && igrac.getPozY() == y) { // Ubijanje igraca
 					igrac.setZiv(false);
 				}
 			}
-			if (tabla[x - i][y] != 9 && tabla[x - i][y] > 0) {
+			if (tabla[x - i][y] == 4) { // Aktiviranje druge bombe
+				mc.posaljiBombu(x - i, y, "[PUCANJE]");
+				pucanje(x - i, y);
+				break;
+			}
+
+			if (tabla[x - i][y] != 9 && tabla[x - i][y] > 0) { // Pucanje unutrasnjeg zida i prekid bombe
 				tabla[x - i][y] = 0;
 				break;
-			} else if (tabla[x - i][y] == 0)
+			} else if (tabla[x - i][y] == 0) // Prolazak kroz prazna polja i postavljanja efekta eksplozije
 				tabla[x - i][y] = 7;
 		}
 		for (int i = 1; i < 4; i++) {
@@ -399,6 +486,11 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 				if (igrac.getPozX() == x + i && igrac.getPozY() == y) {
 					igrac.setZiv(false);
 				}
+			}
+			if (tabla[x + i][y] == 4) {
+				mc.posaljiBombu(x + i, y, "[PUCANJE]");
+				pucanje(x + i, y);
+				break;
 			}
 			if (tabla[x + i][y] != 9 && tabla[x + i][y] > 0) {
 				tabla[x + i][y] = 0;
@@ -414,6 +506,11 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 					igrac.setZiv(false);
 				}
 			}
+			if (tabla[x][y - i] == 4) {
+				mc.posaljiBombu(x, y - i, "[PUCANJE]");
+				pucanje(x, y - i);
+				break;
+			}
 			if (tabla[x][y - i] != 9 && tabla[x][y - i] > 0) {
 				tabla[x][y - i] = 0;
 				break;
@@ -427,6 +524,11 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 				if (igrac.getPozX() == x && igrac.getPozY() == y + i) {
 					igrac.setZiv(false);
 				}
+			}
+			if (tabla[x][y + i] == 4) {
+				mc.posaljiBombu(x, y + i, "[PUCANJE]");
+				pucanje(x, y + i);
+				break;
 			}
 			if (tabla[x][y + i] != 9 && tabla[x][y + i] > 0) {
 				tabla[x][y + i] = 0;
@@ -461,10 +563,11 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 		igraci.get(1).setMozeBomba(true);
 		novaPartija = true;
 		pocelo = true;
-		proveraZaEksploziju = true;
-		boom = 1;
-		is = 4;
-		p = 2;
+		proveraZaEksploziju = true; // Omogucava animaciju eksplozije bombe
+		boom = 1; // Omogucava animaciju umiranja igraca
+		is = 4; // Pocetni broj sekundi za odbrojavanje
+		p = 2; // Za ispis pobednika nakon smrti jednog igraca
+		brSekundi = 120; // Merenje vremena npr.
 		ucitajTabelu();
 		repaint();
 	}
@@ -472,5 +575,9 @@ public class ClientIgra extends JPanel implements KeyListener, ActionListener {
 	public String vratiPobede() {
 		return "Pobede igraca " + igraci.get(0).getUsername() + ": " + igraci.get(0).getBrPobeda() + "\n Pobede igraca "
 				+ igraci.get(1).getUsername() + ": " + igraci.get(1).getBrPobeda() + "\n";
+	}
+
+	public void mozeBombaPonov() {
+		igraci.get(brIgraca).setMozeBomba(true);
 	}
 }

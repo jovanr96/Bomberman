@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 
 import server.Server;
 
@@ -58,7 +59,7 @@ public class ServerNit extends Thread {
 				username = ulaz.readLine().trim();
 				if(username==null)
 					p = false;
-				else if(username.startsWith(""))
+				else if(username.startsWith(" "))
 					p = false;
 				if (!Server.klijenti.isEmpty())
 					for (ServerNit k : Server.klijenti) {
@@ -95,7 +96,13 @@ public class ServerNit extends Thread {
 				}
 				Server.posaljiPoruku(prijem, this);
 			}
-
+		}catch(SocketException ex) {
+			try {
+				Server.izbaciKlijenta(this);
+			} catch (IOException | InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -84,7 +84,8 @@ public class ClientNit extends Thread {
 			}
 
 		} catch (IOException ex) {
-			mc.getTextArea().append("Prekinuta konekcija\n");
+			mc.getTextArea().append("Prekinuta konekcija usled gasenja servera\n");
+			mc.prekinutaKonekcija();
 		}
 
 	}

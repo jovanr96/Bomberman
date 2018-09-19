@@ -40,12 +40,14 @@ public class MainClient {
 	private JTextField textField;
 	private JTextArea textArea;
 	private Socket soket;
-	private int b;
+	private int brojIgraca;
 	public ClientIgra ci;
 	private ClientNit cn;
 	public static String drugiKlijent;
 	public String[] options = { "Da", "Ne" };
-
+	private static final int port = 2401;
+	public String user;
+	
 	public JTextArea getTextArea() {
 		return textArea;
 	}
@@ -54,8 +56,6 @@ public class MainClient {
 		this.textArea = textArea;
 	}
 
-	private static final int port = 2401;
-	public String user;
 
 	/**
 	 * Launch the application.
@@ -138,7 +138,7 @@ public class MainClient {
 		btnPoveziSe.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				String adresa = textField.getText();
-				if (soket == null)
+				if (soket == null || soket.isClosed())
 					try {
 						soket = new Socket(adresa, 2401);
 
@@ -151,9 +151,10 @@ public class MainClient {
 						if (prijem.contains("Prebukirano")) {
 							JOptionPane.showMessageDialog(frame, "Server je prebukiran", "Greska",
 									JOptionPane.ERROR_MESSAGE);
+							soket = null;
 						} else if (prijem.contains("Dobrodosli")) {
-							b = Integer.parseInt(prijem.split(",")[1]);
-							textArea.append("Br igraca je : " + b + "\n");
+							brojIgraca = Integer.parseInt(prijem.split(",")[1]);
+							textArea.append("Br igraca je : " + brojIgraca + "\n");
 							boolean provera = true;
 							String text = "Unesite korisnicko ime";
 							while (provera) {
@@ -163,18 +164,19 @@ public class MainClient {
 									String poruka = ulaz.readLine();
 									if (poruka.contains("Moze")) {
 										provera = false;
-										napraviNit(b);
+										napraviNit(brojIgraca);
 									} else if (poruka.contains("Ponovo")) {
 										text = "Unesite novo korisnicko ime, prethodno je zauzeto!";
 									}
 
 								}
 							}
+							textArea.append("Dobrodosli " + user + "\n");
 						}
-						textArea.append("Dobrodosli " + user + "\n");
+						
 					} catch (IOException ex) {
-						System.out.println("Kontrolisana greska! ");
-						System.out.println("Nije moguce povezati se na server. Proverite da li je server pokrenut!");
+						textArea.append("Kontrolisana greska! \n");
+						textArea.append("Nije moguce povezati se na server. Proverite da li je server pokrenut!\n");
 					}
 				else
 					textArea.append("Vec ste povezani sa serverom!\n");
@@ -189,7 +191,7 @@ public class MainClient {
 				int PromptResult = JOptionPane.showOptionDialog(frame,
 						"Da li ste sigurni da zelite da izadjete iz igre?", "Izlazak", JOptionPane.DEFAULT_OPTION,
 						JOptionPane.WARNING_MESSAGE, null, options, null);
-				if (PromptResult == 0)
+				if (PromptResult == 0) {
 					try {
 						if (soket != null) {
 							posaljiPorukuZaIzlazak();
@@ -200,11 +202,15 @@ public class MainClient {
 									cn.getUlaz().close();
 							}
 							soket.close();
+							
 						}
 					} catch (IOException e) {
 						textArea.append("Greska pri obustavljanju konekcije!\n");
 					}
-				frame.dispose();
+					frame.dispose();
+					System.exit(0);
+				}
+				
 			}
 		});
 		btnNewButton.setBounds(12, 371, 176, 46);
@@ -213,29 +219,34 @@ public class MainClient {
 		JButton btnNewButton_1 = new JButton("Startuj igru");
 		btnNewButton_1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				PrintWriter pw;
-				int brPartija;
-				String text = "Koliko partija zelite da igrate?";
+				if (soket != null) {
+					PrintWriter pw;
+					int brPartija;
+					String text = "Koliko partija zelite da igrate?";
 
-				try {
-					pw = new PrintWriter(soket.getOutputStream(), true);
-					while (true) {
-						try {
-							brPartija = Integer.parseInt(JOptionPane.showInputDialog(frame, text, "Start igre",
-									JOptionPane.QUESTION_MESSAGE));
-							if (brPartija < 1)
-								throw new NumberFormatException();
-							break;
-						} catch (NumberFormatException ex) {
-							text = "Lose uneta vrednost! Unesite ponovo.";
+					try {
+						pw = new PrintWriter(soket.getOutputStream(), true);
+						while (true) {
+							try {
+								brPartija = Integer.parseInt(JOptionPane.showInputDialog(frame, text, "Start igre",
+										JOptionPane.QUESTION_MESSAGE));
+								if (brPartija < 1)
+									throw new NumberFormatException();
+								break;
+							} catch (NumberFormatException ex) {
+								text = "Lose uneta vrednost! Unesite ponovo.";
+							}
 						}
+						pw.println("[START] : " + brPartija);
+
+					} catch (IOException e) {
+						System.out.println("Kontrolisana greska! Problem pri startovanju igre!");
 					}
-					pw.println("[START] : " + brPartija);
 
-				} catch (IOException e) {
-					System.out.println("Kontrolisana greska! Problem pri startovanju igre!");
+				} else {
+					JOptionPane.showMessageDialog(frame, "Niste povezani sa serverom!", "Error",
+							JOptionPane.WARNING_MESSAGE);
 				}
-
 			}
 		});
 		btnNewButton_1.setBounds(12, 247, 176, 46);
@@ -264,6 +275,9 @@ public class MainClient {
 						textArea.append("Greska pri obustavljanju konekcije!\n");
 					}
 					frame.dispose();
+					System.exit(0);
+				}else if(PromptResult == 1) {
+				
 				}
 			}
 		});
@@ -294,7 +308,7 @@ public class MainClient {
 	public void posaljiPorukuZaStart(int i) {
 		try {
 			PrintWriter izlaz = new PrintWriter(soket.getOutputStream(), true);
-			int b = JOptionPane.showOptionDialog(frame, "Da li zelite da zapocnete igru u " + i + " parija?", "Game",
+			int b = JOptionPane.showOptionDialog(frame, "Da li zelite da zapocnete igru u " + i + " partija?", "Game",
 					JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, options, null);
 			if (b == JOptionPane.YES_OPTION) {
 				izlaz.println("START : " + i);
@@ -315,7 +329,7 @@ public class MainClient {
 	}
 
 	public void pokreniIgru(int i) {
-		ci = new ClientIgra(b, this, i);
+		ci = new ClientIgra(brojIgraca, this, i);
 		frame2 = new JFrame("Game");
 		frame2.setLocationRelativeTo(frame);
 		frame2.setVisible(true);
@@ -324,7 +338,7 @@ public class MainClient {
 
 		frame2.add(ci);
 		frame2.pack();
-		frame2.setSize(725, 800);
+		frame2.setSize(725, 700);
 		frame.setVisible(false);
 		frame2.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
@@ -407,15 +421,15 @@ public class MainClient {
 		}
 	}
 
-	public void postaviBombu(int b2, int c) {
-		ci.postaviBombu(b2, c);
+	public void postaviBombu(int pozX, int pozY) {
+		ci.postaviBombu(pozX, pozY);
 
 	}
 
 	public void izbaciIgraca() {
 		textArea.append("Igrac " + drugiKlijent + " je napustio igru\n");
-		if (b == 1) {
-			b = 0;
+		if (brojIgraca == 1) {
+			brojIgraca = 0;
 			textArea.append("Novi broj igraca : 0\n");
 		}
 		ugasiIgruIPrikaziRezultat(0);
@@ -429,13 +443,13 @@ public class MainClient {
 		// pobednik drugi igrac
 
 		else if (i == 2) {
-			if (b == 0) {
+			if (brojIgraca == 0) {
 				textArea.append("Pobednik partije je " + user + "\n");
 			} else {
 				textArea.append("Pobednik partije je " + drugiKlijent + "\n");
 			}
 		} else if (i == 3) {
-			if (b == 0) {
+			if (brojIgraca == 0) {
 				textArea.append("Pobednik partije je " + drugiKlijent + "\n");
 			} else {
 				textArea.append("Pobednik partije je " + user + "\n");
@@ -445,8 +459,14 @@ public class MainClient {
 			frame2.setVisible(false);
 			frame2.dispose();
 			frame.setVisible(true);
-			textArea.append(ci.vratiPobede());
-			ci = null;
+			try {
+				textArea.append(ci.vratiPobede());
+				ci = null;
+				// if (i != 1)
+				// System.exit(0);
+			} catch (NullPointerException ex) {
+
+			}
 		}
 
 	}
@@ -456,6 +476,15 @@ public class MainClient {
 			cn.join();
 			ci = null;
 			soket.close();
+			System.out.println("Soket zatvoren!");
+			if (frame2 != null) {
+				frame2.setVisible(false);
+				frame2.dispose();
+				frame.setVisible(true);
+				JOptionPane.showMessageDialog(frame, "Izgubljena konekcija sa serverom", "Warning",
+						JOptionPane.WARNING_MESSAGE);
+			}
+			// System.exit(0);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
